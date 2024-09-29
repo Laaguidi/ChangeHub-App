@@ -1,7 +1,8 @@
 // screens/Register.js
 
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, Button, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { auth, db } from '../firebase'; // Import Firebase
 
 const Register = ({ navigation }) => {
     const [fullName, setFullName] = useState('');
@@ -10,8 +11,29 @@ const Register = ({ navigation }) => {
     const [confirmPassword, setConfirmPassword] = useState('');
 
     const handleRegister = () => {
-        // Handle registration logic here (e.g., Firebase auth)
-        console.log('Register pressed');
+        if (password !== confirmPassword) {
+            Alert.alert('Passwords do not match');
+            return;
+        }
+
+        // Firebase Authentication and Firestore user creation
+        auth.createUserWithEmailAndPassword(email, password)
+            .then((userCredential) => {
+                const user = userCredential.user;
+
+                // Save user information to Firestore
+                db.collection('users').doc(user.uid).set({
+                    fullName: fullName,
+                    email: user.email,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                });
+
+                Alert.alert('Registration successful!');
+                navigation.navigate('Login');
+            })
+            .catch((error) => {
+                Alert.alert(error.message);
+            });
     };
 
     return (

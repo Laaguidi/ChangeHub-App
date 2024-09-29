@@ -1,15 +1,22 @@
 // screens/Login.js
 
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, Button, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { auth } from '../firebase'; // Import Firebase
 
 const Login = ({ navigation }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
 
     const handleLogin = () => {
-        // Handle login logic here (e.g., Firebase auth)
-        console.log('Login pressed');
+        auth.signInWithEmailAndPassword(email, password)
+            .then((userCredential) => {
+                Alert.alert('Login successful!');
+                // Navigate to another screen or home after login
+            })
+            .catch((error) => {
+                Alert.alert(error.message);
+            });
     };
 
     return (

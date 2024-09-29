@@ -6,7 +6,7 @@ import { GOOGLE_API_KEY } from '@env';
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-    apiKey: "AIzaSyAOrWdLY2SdFcYwOTPF0Owwzzx-Fhka5TM",
+    apiKey: GOOGLE_API_KEY,
     authDomain: "change-hub-3aa8c.firebaseapp.com",
     projectId: "change-hub-3aa8c",
     storageBucket: "change-hub-3aa8c.appspot.com",
