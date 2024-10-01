@@ -12,7 +12,9 @@ const Login = ({ navigation }) => {
         auth.signInWithEmailAndPassword(email, password)
             .then((userCredential) => {
                 Alert.alert('Login successful!');
-                // Navigate to another screen or home after login
+
+                // Navigate to the User page upon successful login
+                navigation.navigate('User');
             })
             .catch((error) => {
                 Alert.alert(error.message);
