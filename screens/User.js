@@ -8,13 +8,28 @@ const User = ({ navigation }) => {
     const user = {
         name: 'John Doe',
         location: 'New York City',
-        profilePicture: 'https://via.placeholder.com/100', // Placeholder image
+        profilePicture: 'https://images.unsplash.com/photo-1704726135027-9c6f034cfa41?q=80&w=2005&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D', // User Profile Picture (Placeholder)
     };
 
     const products = [
-        { id: '1', name: 'iPhone 12', description: 'Brand new, sealed.' },
-        { id: '2', name: 'MacBook Pro', description: 'Lightly used, excellent condition.' },
-        { id: '3', name: 'Sony Headphones', description: 'Noise-canceling, barely used.' },
+        {
+            id: '1',
+            name: 'iPhone 12',
+            description: 'Brand new, sealed.',
+            image: 'https://images.unsplash.com/photo-1599950755346-a3e58f84ca63?q=80&w=2787&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D', // Placeholder Product Image
+        },
+        {
+            id: '2',
+            name: 'MacBook Pro',
+            description: 'Lightly used, excellent condition.',
+            image: 'https://images.unsplash.com/photo-1518448828347-28e2cf0d6e28?q=80&w=2872&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D', // Placeholder Product Image
+        },
+        {
+            id: '3',
+            name: 'Sony Headphones',
+            description: 'Noise-canceling, barely used.',
+            image: 'https://plus.unsplash.com/premium_photo-1679513691474-73102089c117?q=80&w=2913&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D', // Placeholder Product Image
+        },
     ];
 
     return (
@@ -33,13 +48,17 @@ const User = ({ navigation }) => {
                     <Button title="Add New Product" onPress={() => navigation.navigate('AddProduct')} />
                 </View>
 
+                {/* List of Products */}
                 <FlatList
                     data={products}
                     keyExtractor={(item) => item.id}
                     renderItem={({ item }) => (
                         <View style={styles.productCard}>
-                            <Text style={styles.productName}>{item.name}</Text>
-                            <Text style={styles.productDescription}>{item.description}</Text>
+                            <Image source={{ uri: item.image }} style={styles.productImage} />
+                            <View style={styles.productDetails}>
+                                <Text style={styles.productName}>{item.name}</Text>
+                                <Text style={styles.productDescription}>{item.description}</Text>
+                            </View>
                         </View>
                     )}
                 />
@@ -59,9 +78,9 @@ const styles = StyleSheet.create({
         marginBottom: 30,
     },
     profilePicture: {
-        width: 100,
-        height: 100,
-        borderRadius: 50,
+        width: 150,
+        height: 150,
+        borderRadius: 75, // Circular image
         marginBottom: 10,
     },
     userName: {
@@ -89,8 +108,19 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         padding: 15,
         borderRadius: 10,
-        marginBottom: 10,
+        marginBottom: 15,
+        flexDirection: 'row',
+        alignItems: 'center',
         elevation: 2,
+    },
+    productImage: {
+        width: 100,
+        height: 100,
+        borderRadius: 10, // Slightly rounded corners for product images
+        marginRight: 15,
+    },
+    productDetails: {
+        flex: 1,
     },
     productName: {
         fontSize: 18,
