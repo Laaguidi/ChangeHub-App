@@ -1,7 +1,7 @@
 // screens/User.js
 
 import React from 'react';
-import { View, Text, Image, Button, TouchableOpacity, FlatList, StyleSheet } from 'react-native';
+import { View, Text, Image, Button, FlatList, StyleSheet } from 'react-native';
 
 const User = ({ navigation }) => {
     // Static placeholder data for now
@@ -32,6 +32,12 @@ const User = ({ navigation }) => {
         },
     ];
 
+    const wishlist = [
+        { id: '1', title: 'Watch' },
+        { id: '2', title: 'Canon Camera' },
+        { id: '3', title: 'Bicycle' },
+    ];
+
     return (
         <View style={styles.container}>
             {/* User Info Section */}
@@ -60,6 +66,19 @@ const User = ({ navigation }) => {
                                 <Text style={styles.productDescription}>{item.description}</Text>
                             </View>
                         </View>
+                    )}
+                />
+            </View>
+
+            {/* Wishlist Section */}
+            <View style={styles.wishlistSection}>
+                <Text style={styles.wishlistTitle}>Wishlist</Text>
+                {/* Display wishlist items */}
+                <FlatList
+                    data={wishlist}
+                    keyExtractor={(item) => item.id}
+                    renderItem={({ item }) => (
+                        <Text style={styles.wishlistItem}>• {item.title}</Text>
                     )}
                 />
             </View>
@@ -129,6 +148,19 @@ const styles = StyleSheet.create({
     productDescription: {
         fontSize: 14,
         color: 'gray',
+    },
+    wishlistSection: {
+        marginTop: 20,
+    },
+    wishlistTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        marginBottom: 10,
+    },
+    wishlistItem: {
+        fontSize: 16,
+        color: 'gray',
+        marginBottom: 5,
     },
 });
 
