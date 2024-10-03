@@ -1,7 +1,8 @@
-// screens/User.js
-
 import React from 'react';
-import { View, Text, Image, Button, FlatList, StyleSheet } from 'react-native';
+import { View, Text, Image, Button, FlatList, ScrollView, StyleSheet, Dimensions } from 'react-native';
+import Carousel from 'react-native-reanimated-carousel'; // Importing the carousel
+
+const { width } = Dimensions.get('window'); // Get screen width for carousel
 
 const User = ({ navigation }) => {
     // Static placeholder data for now
@@ -33,13 +34,21 @@ const User = ({ navigation }) => {
     ];
 
     const wishlist = [
-        { id: '1', title: 'Watch' },
-        { id: '2', title: 'Canon Camera' },
-        { id: '3', title: 'Bicycle' },
+        { id: '1', title: 'Watch', image: 'https://images.unsplash.com/photo-1524805444758-089113d48a6d?q=80&w=2788&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D' },
+        { id: '2', title: 'Canon Camera', image: 'https://images.unsplash.com/photo-1495844138710-938feaeeadcc?q=80&w=3006&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D' },
+        { id: '3', title: 'Bicycle', image: 'https://images.unsplash.com/photo-1532298229144-0ec0c57515c7?q=80&w=2844&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D' },
     ];
 
+    // Render Wishlist Item for Carousel
+    const renderWishlistItem = ({ item }) => (
+        <View style={styles.wishlistCard}>
+            <Image source={{ uri: item.image }} style={styles.wishlistImage} />
+            <Text style={styles.wishlistTitle}>{item.title}</Text>
+        </View>
+    );
+
     return (
-        <View style={styles.container}>
+        <ScrollView contentContainerStyle={styles.scrollContainer}>
             {/* User Info Section */}
             <View style={styles.userInfoSection}>
                 <Image source={{ uri: user.profilePicture }} style={styles.profilePicture} />
@@ -72,23 +81,25 @@ const User = ({ navigation }) => {
 
             {/* Wishlist Section */}
             <View style={styles.wishlistSection}>
-                <Text style={styles.wishlistTitle}>Wishlist</Text>
-                {/* Display wishlist items */}
-                <FlatList
+                <Text style={styles.wishlistHeader}>Wishlist</Text>
+                <Carousel
+                    loop={true}
+                    width={width * 0.8} // Adjust width to fit within the page
+                    height={200} // Set height for the carousel
+                    autoPlay={true}
                     data={wishlist}
-                    keyExtractor={(item) => item.id}
-                    renderItem={({ item }) => (
-                        <Text style={styles.wishlistItem}>• {item.title}</Text>
-                    )}
+                    scrollAnimationDuration={1000}
+                    renderItem={renderWishlistItem}
+                    style={styles.carouselStyle}
                 />
             </View>
-        </View>
+        </ScrollView>
     );
 };
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
+    scrollContainer: {
+        flexGrow: 1, // Allows scrolling beyond the available space
         padding: 20,
         backgroundColor: '#f5f5f5',
     },
@@ -111,7 +122,7 @@ const styles = StyleSheet.create({
         color: 'gray',
     },
     productsSection: {
-        flex: 1,
+        marginBottom: 20, // Add margin to separate sections
     },
     productsHeader: {
         flexDirection: 'row',
@@ -152,15 +163,31 @@ const styles = StyleSheet.create({
     wishlistSection: {
         marginTop: 20,
     },
-    wishlistTitle: {
+    wishlistHeader: {
         fontSize: 20,
         fontWeight: 'bold',
         marginBottom: 10,
     },
-    wishlistItem: {
-        fontSize: 16,
-        color: 'gray',
-        marginBottom: 5,
+    wishlistCard: {
+        backgroundColor: '#fff',
+        borderRadius: 10,
+        padding: 15,
+        alignItems: 'center',
+        justifyContent: 'center',
+        elevation: 3,
+    },
+    wishlistImage: {
+        width: 150,
+        height: 150,
+        borderRadius: 10,
+        marginBottom: 10,
+    },
+    wishlistTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
+    carouselStyle: {
+        alignSelf: 'center', // Center the carousel
     },
 });
 
