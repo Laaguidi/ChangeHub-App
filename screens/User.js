@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Image, Button, FlatList, ScrollView, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, Image, Button, FlatList, ScrollView, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
 import Carousel from 'react-native-reanimated-carousel'; // Importing the carousel
 
 const { width } = Dimensions.get('window'); // Get screen width for carousel
@@ -47,6 +47,12 @@ const User = ({ navigation }) => {
         </View>
     );
 
+    // Function to handle navigation when a product is clicked
+    const handleProductPress = (product) => {
+        navigation.navigate('Product', { product });
+    };
+
+
     return (
         <ScrollView contentContainerStyle={styles.scrollContainer}>
             {/* User Info Section */}
@@ -68,13 +74,15 @@ const User = ({ navigation }) => {
                     data={products}
                     keyExtractor={(item) => item.id}
                     renderItem={({ item }) => (
-                        <View style={styles.productCard}>
-                            <Image source={{ uri: item.image }} style={styles.productImage} />
-                            <View style={styles.productDetails}>
-                                <Text style={styles.productName}>{item.name}</Text>
-                                <Text style={styles.productDescription}>{item.description}</Text>
+                        <TouchableOpacity onPress={() => handleProductPress(item)}>
+                            <View style={styles.productCard}>
+                                <Image source={{ uri: item.image }} style={styles.productImage} />
+                                <View style={styles.productDetails}>
+                                    <Text style={styles.productName}>{item.name}</Text>
+                                    <Text style={styles.productDescription}>{item.description}</Text>
+                                </View>
                             </View>
-                        </View>
+                        </TouchableOpacity>
                     )}
                 />
             </View>
@@ -86,7 +94,7 @@ const User = ({ navigation }) => {
                     loop={true}
                     width={width * 0.8} // Adjust width to fit within the page
                     height={200} // Set height for the carousel
-                    autoPlay={true}
+                    //autoPlay={true}
                     data={wishlist}
                     scrollAnimationDuration={1000}
                     renderItem={renderWishlistItem}
