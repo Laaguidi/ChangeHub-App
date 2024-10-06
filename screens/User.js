@@ -35,12 +35,26 @@ const User = ({ navigation, route }) => {
         { id: '3', title: 'Bicycle' },
     ]);
 
-    // Retrieve the new product added from AddProduct screen via navigation params
+    // Retrieve the new product or updated product from Product screen via navigation params
     useEffect(() => {
         if (route.params?.newProduct) {
             setProducts((prevProducts) => [...prevProducts, route.params.newProduct]);
         }
-    }, [route.params?.newProduct]);
+
+        if (route.params?.updatedProduct) {
+            setProducts((prevProducts) =>
+                prevProducts.map((product) =>
+                    product.id === route.params.updatedProduct.id ? route.params.updatedProduct : product
+                )
+            );
+        }
+
+        if (route.params?.deletedProductId) {
+            setProducts((prevProducts) =>
+                prevProducts.filter((product) => product.id !== route.params.deletedProductId)
+            );
+        }
+    }, [route.params]);
 
     const user = {
         name: 'John Doe',

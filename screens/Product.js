@@ -1,10 +1,7 @@
-// screens/Product.js
-
 import React from 'react';
-import { View, Text, Image, StyleSheet, FlatList, Button } from 'react-native';
+import { View, Text, Image, StyleSheet, FlatList, Button, Alert } from 'react-native';
 
 const Product = ({ route, navigation }) => {
-    // Extract product data passed via navigation
     const { product } = route.params;
 
     // Placeholder data for products the owner wishes to exchange with
@@ -14,7 +11,29 @@ const Product = ({ route, navigation }) => {
         { id: '3', title: 'Mountain Bike', image: 'https://images.unsplash.com/photo-1565294124524-200bb738cdb0?q=80&w=3000&auto=format&fit=crop' },
     ];
 
-    // Render each exchange option
+    // Handler for delete button
+    const handleDelete = () => {
+        Alert.alert(
+            'Delete Product',
+            'Are you sure you want to delete this product?',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'OK', onPress: () => {
+                        navigation.navigate('User', { deletedProductId: product.id });
+                    }},
+            ]
+        );
+    };
+
+    // Handler for update button
+    const handleUpdate = () => {
+        const updatedProduct = {
+            ...product,
+            name: `${product.name} (Updated)`
+        };
+        navigation.navigate('User', { updatedProduct });
+    };
+
     const renderExchangeOption = ({ item }) => (
         <View style={styles.exchangeCard}>
             <Image source={{ uri: item.image }} style={styles.exchangeImage} />
@@ -32,6 +51,12 @@ const Product = ({ route, navigation }) => {
                 <Text style={styles.productName}>{product.name}</Text>
                 <Text style={styles.productDescription}>{product.description}</Text>
                 <Text style={styles.productCondition}>Condition: {product.condition}</Text>
+            </View>
+
+            {/* Delete and Update Buttons */}
+            <View style={styles.actionButtons}>
+                <Button title="Update" onPress={handleUpdate} color="#007bff" />
+                <Button title="Delete" onPress={handleDelete} color="#dc3545" />
             </View>
 
             {/* Exchange Options */}
@@ -113,6 +138,11 @@ const styles = StyleSheet.create({
     },
     backButton: {
         marginTop: 10,
+    },
+    actionButtons: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 30,
     },
 });
 
