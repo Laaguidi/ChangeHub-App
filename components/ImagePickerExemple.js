@@ -1,12 +1,13 @@
-import * as ImagePicker from 'expo-image-picker';
-import { Button, Image, View } from 'react-native';
+// ImagePickerExample.js
+
 import React, { useState } from 'react';
+import { View, Button, Image } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 
 const ImagePickerExample = () => {
     const [image, setImage] = useState(null);
 
     const pickImage = async () => {
-        // No permissions request is necessary for launching the image library
         let result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
             allowsEditing: true,
@@ -15,7 +16,7 @@ const ImagePickerExample = () => {
         });
 
         if (!result.canceled) {
-            setImage(result.uri); // Set the image URI to display the selected image
+            setImage(result.uri); // Set image URI
         }
     };
 

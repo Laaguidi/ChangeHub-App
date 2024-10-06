@@ -1,14 +1,17 @@
+// Product.js
+
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, Image, StyleSheet, TouchableOpacity } from 'react-native';
-import * as ImagePicker from 'expo-image-picker'; // Image picker for selecting product images
+import * as ImagePicker from 'expo-image-picker';
+import { useNavigation } from '@react-navigation/native';
 
-const AddProduct = ({ navigation }) => {
+const AddProduct = () => {
     const [productName, setProductName] = useState('');
     const [productDescription, setProductDescription] = useState('');
-    const [productCondition, setProductCondition] = useState('New');
+    const [productCondition, setProductCondition] = useState('');
     const [productImage, setProductImage] = useState(null);
+    const navigation = useNavigation();
 
-    // Function to pick an image from the gallery
     const pickImage = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -18,23 +21,19 @@ const AddProduct = ({ navigation }) => {
         });
 
         if (!result.canceled) {
-            setProductImage(result.uri);
+            setProductImage(result.assets[0].uri); // Correct image URI
         }
     };
 
-    // Function to handle adding a new product
     const handleAddProduct = () => {
-        if (productName && productDescription && productCondition) {
+        if (productName && productDescription && productImage) {
             const newProduct = {
                 id: Math.random().toString(),
                 name: productName,
                 description: productDescription,
                 condition: productCondition,
                 image: productImage,
-                wishlist: [],
             };
-            // Here you would typically send this data to a server or state management
-            // For now, we'll just navigate back to the user profile page
             navigation.navigate('User', { newProduct });
         } else {
             alert('Please fill out all fields');
@@ -43,47 +42,29 @@ const AddProduct = ({ navigation }) => {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.header}>Add New Product</Text>
-
-            {/* Product Name Input */}
+            <Text style={styles.title}>Add New Product</Text>
             <TextInput
                 style={styles.input}
                 placeholder="Product Name"
                 value={productName}
                 onChangeText={setProductName}
             />
-
-            {/* Product Description Input */}
             <TextInput
                 style={styles.input}
                 placeholder="Product Description"
                 value={productDescription}
                 onChangeText={setProductDescription}
-                multiline
             />
-
-            {/* Product Condition Selector */}
-            <View style={styles.conditionContainer}>
-                <Text style={styles.label}>Condition:</Text>
-                <TouchableOpacity
-                    style={styles.conditionButton}
-                    onPress={() => setProductCondition('New')}
-                >
-                    <Text style={productCondition === 'New' ? styles.selectedCondition : styles.conditionText}>New</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                    style={styles.conditionButton}
-                    onPress={() => setProductCondition('Good')}
-                >
-                    <Text style={productCondition === 'Good' ? styles.selectedCondition : styles.conditionText}>Good</Text>
-                </TouchableOpacity>
-            </View>
-
-            {/* Image Picker */}
-            <Button title="Pick an image from gallery" onPress={pickImage} />
-            {productImage && <Image source={{ uri: productImage }} style={styles.productImage} />}
-
-            {/* Submit Button */}
+            <TextInput
+                style={styles.input}
+                placeholder="Product Condition"
+                value={productCondition}
+                onChangeText={setProductCondition}
+            />
+            <TouchableOpacity onPress={pickImage} style={styles.imagePicker}>
+                <Text style={styles.imagePickerText}>Pick an image</Text>
+            </TouchableOpacity>
+            {productImage && <Image source={{ uri: productImage }} style={styles.previewImage} />}
             <Button title="Add Product" onPress={handleAddProduct} />
         </View>
     );
@@ -93,47 +74,35 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         padding: 20,
-        backgroundColor: '#f5f5f5',
+        backgroundColor: '#f8f8f8',
     },
-    header: {
+    title: {
         fontSize: 24,
         fontWeight: 'bold',
         marginBottom: 20,
     },
     input: {
         borderWidth: 1,
-        borderColor: 'gray',
+        borderColor: '#ccc',
         padding: 10,
-        marginBottom: 20,
         borderRadius: 5,
+        marginBottom: 20,
         backgroundColor: '#fff',
     },
-    conditionContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
+    imagePicker: {
+        padding: 15,
+        backgroundColor: '#007bff',
+        borderRadius: 5,
         marginBottom: 20,
+        alignItems: 'center',
     },
-    label: {
+    imagePickerText: {
+        color: '#fff',
         fontSize: 16,
-        marginRight: 10,
     },
-    conditionButton: {
-        marginHorizontal: 10,
-    },
-    conditionText: {
-        fontSize: 16,
-        color: 'gray',
-    },
-    selectedCondition: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: 'black',
-    },
-    productImage: {
-        width: 100,
-        height: 100,
-        borderRadius: 10,
-        marginTop: 10,
+    previewImage: {
+        width: 200,
+        height: 200,
         marginBottom: 20,
     },
 });
