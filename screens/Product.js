@@ -1,5 +1,8 @@
-import React from 'react';
-import { View, Text, Image, StyleSheet, FlatList, Button, Alert } from 'react-native';
+import React, { useState } from 'react';
+import {
+    View, Text, Image, StyleSheet, FlatList, Button, Alert, Modal,
+    TextInput, TouchableOpacity, ScrollView
+} from 'react-native';
 
 const Product = ({ route, navigation }) => {
     const { product } = route.params;
@@ -10,6 +13,13 @@ const Product = ({ route, navigation }) => {
         { id: '2', title: 'Nikon DSLR Camera', image: 'https://images.unsplash.com/photo-1519183071298-a2962c3dd95e?q=80&w=3000&auto=format&fit=crop' },
         { id: '3', title: 'Mountain Bike', image: 'https://images.unsplash.com/photo-1565294124524-200bb738cdb0?q=80&w=3000&auto=format&fit=crop' },
     ];
+
+    // State for modal visibility and updated product info
+    const [modalVisible, setModalVisible] = useState(false);
+    const [updatedName, setUpdatedName] = useState(product.name);
+    const [updatedDescription, setUpdatedDescription] = useState(product.description);
+    const [updatedCondition, setUpdatedCondition] = useState(product.condition);
+    const [updatedImage, setUpdatedImage] = useState(product.image);
 
     // Handler for delete button
     const handleDelete = () => {
@@ -25,13 +35,19 @@ const Product = ({ route, navigation }) => {
         );
     };
 
-    // Handler for update button
-    const handleUpdate = () => {
+    // Handler for registering the updated product details
+    const handleUpdateProduct = () => {
         const updatedProduct = {
             ...product,
-            name: `${product.name} (Updated)`
+            name: updatedName,
+            description: updatedDescription,
+            condition: updatedCondition,
+            image: updatedImage
         };
+
+        // Navigate back to the User screen with updated product details
         navigation.navigate('User', { updatedProduct });
+        setModalVisible(false);
     };
 
     const renderExchangeOption = ({ item }) => (
@@ -42,7 +58,7 @@ const Product = ({ route, navigation }) => {
     );
 
     return (
-        <View style={styles.container}>
+        <ScrollView contentContainerStyle={styles.container}>
             {/* Product Image */}
             <Image source={{ uri: product.image }} style={styles.productImage} />
 
@@ -55,7 +71,7 @@ const Product = ({ route, navigation }) => {
 
             {/* Delete and Update Buttons */}
             <View style={styles.actionButtons}>
-                <Button title="Update" onPress={handleUpdate} color="#007bff" />
+                <Button title="Update" onPress={() => setModalVisible(true)} color="#007bff" />
                 <Button title="Delete" onPress={handleDelete} color="#dc3545" />
             </View>
 
@@ -75,13 +91,60 @@ const Product = ({ route, navigation }) => {
             <View style={styles.backButton}>
                 <Button title="Back to Profile" onPress={() => navigation.goBack()} />
             </View>
-        </View>
+
+            {/* Modal for updating product info */}
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={modalVisible}
+                onRequestClose={() => setModalVisible(false)}
+            >
+                <View style={styles.modalContainer}>
+                    <View style={styles.modalContent}>
+                        <Text style={styles.modalTitle}>Update Product</Text>
+
+                        {/* Input fields for updating product info */}
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Product Name"
+                            value={updatedName}
+                            onChangeText={setUpdatedName}
+                        />
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Description"
+                            value={updatedDescription}
+                            onChangeText={setUpdatedDescription}
+                            multiline
+                        />
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Condition (New, Used, etc.)"
+                            value={updatedCondition}
+                            onChangeText={setUpdatedCondition}
+                        />
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Product Image URL"
+                            value={updatedImage}
+                            onChangeText={setUpdatedImage}
+                        />
+
+                        {/* Buttons to save or cancel updates */}
+                        <View style={styles.modalButtons}>
+                            <Button title="Register" onPress={handleUpdateProduct} />
+                            <Button title="Cancel" onPress={() => setModalVisible(false)} color="red" />
+                        </View>
+                    </View>
+                </View>
+            </Modal>
+        </ScrollView>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1,
+        flexGrow: 1,
         padding: 20,
         backgroundColor: '#f5f5f5',
     },
@@ -143,6 +206,37 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         marginBottom: 30,
+    },
+    modalContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0,0,0,0.5)',
+    },
+    modalContent: {
+        width: 300,
+        padding: 20,
+        backgroundColor: '#fff',
+        borderRadius: 10,
+        alignItems: 'center',
+    },
+    modalTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        marginBottom: 20,
+    },
+    input: {
+        width: '100%',
+        borderWidth: 1,
+        borderColor: 'gray',
+        padding: 10,
+        borderRadius: 5,
+        marginBottom: 15,
+    },
+    modalButtons: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        width: '100%',
     },
 });
 
