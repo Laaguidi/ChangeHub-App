@@ -24,7 +24,7 @@ const Login = ({ navigation }) => {
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Welcome Back</Text>
-            <Text style={styles.subtitle}>Login to TradeHub to continue swapping.</Text>
+            <Text style={styles.subtitle}>Login Test.</Text>
 
             <TextInput
                 style={styles.input}

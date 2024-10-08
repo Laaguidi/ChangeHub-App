@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, Button, FlatList, ScrollView, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
+import {
+    View, Text, Image, Button, FlatList, ScrollView, StyleSheet, Dimensions,
+    TouchableOpacity, Modal, TextInput, Alert
+} from 'react-native';
 
 const { width } = Dimensions.get('window');
 
@@ -28,14 +31,23 @@ const User = ({ navigation, route }) => {
         },
     ]);
 
-    // Wishlist (titles only)
     const [wishlist, setWishlist] = useState([
         { id: '1', title: 'Watch' },
         { id: '2', title: 'Camera' },
         { id: '3', title: 'Bicycle' },
     ]);
 
-    // Retrieve the new product or updated product from Product screen via navigation params
+    const [user, setUser] = useState({
+        name: 'John Doe',
+        location: 'New York City',
+        profilePicture: 'https://images.unsplash.com/photo-1704726135027-9c6f034cfa41?q=80&w=2005&auto=format&fit=crop',
+    });
+
+    const [modalVisible, setModalVisible] = useState(false);
+    const [newName, setNewName] = useState(user.name);
+    const [newLocation, setNewLocation] = useState(user.location);
+    const [newProfilePicture, setNewProfilePicture] = useState(user.profilePicture);
+
     useEffect(() => {
         if (route.params?.newProduct) {
             setProducts((prevProducts) => [...prevProducts, route.params.newProduct]);
@@ -56,10 +68,15 @@ const User = ({ navigation, route }) => {
         }
     }, [route.params]);
 
-    const user = {
-        name: 'John Doe',
-        location: 'New York City',
-        profilePicture: 'https://images.unsplash.com/photo-1704726135027-9c6f034cfa41?q=80&w=2005&auto=format&fit=crop',
+    // Function to handle the update when the user clicks "Save"
+    const handleUpdateUserInfo = () => {
+        setUser({
+            name: newName,
+            location: newLocation,
+            profilePicture: newProfilePicture,
+        });
+        setModalVisible(false);
+        Alert.alert("Success", "Your information has been updated.");
     };
 
     const handleProductPress = (product) => {
@@ -72,6 +89,9 @@ const User = ({ navigation, route }) => {
                 <Image source={{ uri: user.profilePicture }} style={styles.profilePicture} />
                 <Text style={styles.userName}>{user.name}</Text>
                 <Text style={styles.userLocation}>{user.location}</Text>
+
+                {/* Button to open modal for updating user info */}
+                <Button title="Update Info" onPress={() => setModalVisible(true)} />
             </View>
 
             <View style={styles.productsSection}>
@@ -108,6 +128,42 @@ const User = ({ navigation, route }) => {
                     </Text>
                 ))}
             </View>
+
+            {/* Modal for updating user info */}
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={modalVisible}
+                onRequestClose={() => setModalVisible(false)}
+            >
+                <View style={styles.modalContainer}>
+                    <View style={styles.modalContent}>
+                        <Text style={styles.modalTitle}>Update Your Information</Text>
+
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Name"
+                            value={newName}
+                            onChangeText={setNewName}
+                        />
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Location"
+                            value={newLocation}
+                            onChangeText={setNewLocation}
+                        />
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Profile Picture URL"
+                            value={newProfilePicture}
+                            onChangeText={setNewProfilePicture}
+                        />
+
+                        <Button title="Save" onPress={handleUpdateUserInfo} />
+                        <Button title="Cancel" onPress={() => setModalVisible(false)} color="red" />
+                    </View>
+                </View>
+            </Modal>
         </ScrollView>
     );
 };
@@ -192,6 +248,32 @@ const styles = StyleSheet.create({
         fontSize: 16,
         paddingVertical: 5,
         color: '#333',
+    },
+    modalContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0,0,0,0.5)',
+    },
+    modalContent: {
+        width: 300,
+        padding: 20,
+        backgroundColor: '#fff',
+        borderRadius: 10,
+        alignItems: 'center',
+    },
+    modalTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        marginBottom: 20,
+    },
+    input: {
+        width: '100%',
+        borderWidth: 1,
+        borderColor: 'gray',
+        padding: 10,
+        borderRadius: 5,
+        marginBottom: 15,
     },
 });
 

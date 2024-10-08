@@ -39,7 +39,7 @@ const Register = ({ navigation }) => {
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Create an Account</Text>
-            <Text style={styles.subtitle}>Join TradeHub to start swapping your products.</Text>
+            <Text style={styles.subtitle}>Join Us </Text>
 
             <TextInput
                 style={styles.input}
