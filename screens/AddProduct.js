@@ -1,10 +1,10 @@
-// screens/AddProduct.js
-import React, { useState, useLayoutEffect } from 'react';
+import React, { useState } from 'react';
 import { View, Text, TextInput, Button, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
 import { addProduct } from '../redux/slices/productSlice';
 import { useDispatch } from 'react-redux';
+import { auth } from '../firebase'; // Import Firebase Authentication
 
 const AddProduct = () => {
     const [productName, setProductName] = useState('');
@@ -23,24 +23,27 @@ const AddProduct = () => {
         });
 
         if (!result.canceled) {
-            setProductImage(result.assets[0].uri); // Correct image URI
+            setProductImage(result.assets[0].uri);
         }
     };
 
     const handleAddProduct = () => {
-        if (productName && productDescription && productImage) {
-            const newProduct = {
-                id: Math.random().toString(),
-                name: productName,
-                description: productDescription,
-                condition: productCondition,
-                image: productImage,
-            };
-            dispatch(addProduct(newProduct)); // Dispatch addProduct action
-            navigation.goBack(); // Go back to previous screen
-        } else {
+        if (!productName || !productDescription || !productCondition || !productImage) {
             alert('Please fill out all fields');
+            return;
         }
+
+        // Proceed with adding the product
+        const newProduct = {
+            id: Math.random().toString(),
+            name: productName,
+            description: productDescription,
+            condition: productCondition,
+            image: productImage,
+            userId: auth.currentUser.uid, // Include userId for reference
+        };
+        dispatch(addProduct(newProduct));
+        navigation.goBack();
     };
 
     return (
