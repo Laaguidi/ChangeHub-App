@@ -21,5 +21,6 @@ if (!firebase.apps.length) {
 
 const auth = firebase.auth();
 const db = firebase.firestore();
+const storage = firebase.storage(); // Storage for images
 
-export { auth, db };
+export { auth, db, storage };

@@ -2,44 +2,48 @@
 
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import { auth, db } from '../firebase'; // Import Firebase
+import { auth, db } from '../firebase'; // Import Firebase correctly
+import firebase from 'firebase/compat/app'; // Import firebase for firestore field value
 
 const Register = ({ navigation }) => {
     const [fullName, setFullName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [city, setCity] = useState(''); // Field for user's city
     const [confirmPassword, setConfirmPassword] = useState('');
 
-    const handleRegister = () => {
+    const handleRegister = async () => {
         if (password !== confirmPassword) {
             Alert.alert('Passwords do not match');
             return;
         }
 
-        // Firebase Authentication and Firestore user creation
-        auth.createUserWithEmailAndPassword(email, password)
-            .then((userCredential) => {
-                const user = userCredential.user;
+        try {
+            // Create user using Firebase Authentication
+            const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+            const user = userCredential.user;
 
-                // Save user information to Firestore
-                db.collection('users').doc(user.uid).set({
-                    fullName: fullName,
-                    email: user.email,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                });
-
-                Alert.alert('Registration successful!');
-                navigation.navigate('Login');
-            })
-            .catch((error) => {
-                Alert.alert(error.message);
+            // Save user information to Firestore
+            await db.collection('users').doc(user.uid).set({
+                fullName: fullName,
+                email: user.email,
+                city: city,
+                profilePicture: 'https://via.placeholder.com/150', // Placeholder image
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
             });
+
+            Alert.alert('Registration successful!');
+            navigation.navigate('User', { userId: user.uid }); // Navigate to User page with userId
+        } catch (error) {
+            Alert.alert('Registration failed', error.message);
+            console.error("Error during registration: ", error);
+        }
     };
 
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Create an Account</Text>
-            <Text style={styles.subtitle}>Join Us </Text>
+            <Text style={styles.subtitle}>Join Us</Text>
 
             <TextInput
                 style={styles.input}
@@ -54,6 +58,13 @@ const Register = ({ navigation }) => {
                 value={email}
                 onChangeText={(text) => setEmail(text)}
                 keyboardType="email-address"
+            />
+
+            <TextInput
+                style={styles.input}
+                placeholder="City"
+                value={city}
+                onChangeText={(text) => setCity(text)}
             />
 
             <TextInput

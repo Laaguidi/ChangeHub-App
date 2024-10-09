@@ -1,9 +1,10 @@
-// Product.js
-
-import React, { useState } from 'react';
+// screens/AddProduct.js
+import React, { useState, useLayoutEffect } from 'react';
 import { View, Text, TextInput, Button, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
+import { addProduct } from '../redux/slices/productSlice';
+import { useDispatch } from 'react-redux';
 
 const AddProduct = () => {
     const [productName, setProductName] = useState('');
@@ -11,6 +12,7 @@ const AddProduct = () => {
     const [productCondition, setProductCondition] = useState('');
     const [productImage, setProductImage] = useState(null);
     const navigation = useNavigation();
+    const dispatch = useDispatch();
 
     const pickImage = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
@@ -34,7 +36,8 @@ const AddProduct = () => {
                 condition: productCondition,
                 image: productImage,
             };
-            navigation.navigate('User', { newProduct });
+            dispatch(addProduct(newProduct)); // Dispatch addProduct action
+            navigation.goBack(); // Go back to previous screen
         } else {
             alert('Please fill out all fields');
         }
