@@ -6,18 +6,29 @@ const initialState = {
     error: null,
 };
 
+// Helper function to serialize date fields
+const serializeDates = (user) => {
+    if (user?.createdAt?.toDate) {
+        user.createdAt = user.createdAt.toDate().toISOString();
+    }
+    if (user?.updatedAt?.toDate) {
+        user.updatedAt = user.updatedAt.toDate().toISOString();
+    }
+    return user;
+};
+
 const userReducer = (state = initialState, action) => {
     switch (action.type) {
         case FETCH_USER_SUCCESS:
             return {
                 ...state,
-                user: action.payload,
+                user: serializeDates(action.payload),
                 loading: false,
             };
         case UPDATE_USER_SUCCESS:
             return {
                 ...state,
-                user: { ...state.user, ...action.payload },
+                user: serializeDates({ ...state.user, ...action.payload }),
                 loading: false,
             };
         default:

@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import { auth } from '../firebase';
+import { createProduct } from '../firebaseService';
 import { useNavigation } from '@react-navigation/native';
-import { addProduct } from '../redux/slices/productSlice';
-import { useDispatch } from 'react-redux';
-import { auth } from '../firebase'; // Import Firebase Authentication
 
 const AddProduct = () => {
     const [productName, setProductName] = useState('');
@@ -12,7 +11,6 @@ const AddProduct = () => {
     const [productCondition, setProductCondition] = useState('');
     const [productImage, setProductImage] = useState(null);
     const navigation = useNavigation();
-    const dispatch = useDispatch();
 
     const pickImage = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
@@ -27,23 +25,31 @@ const AddProduct = () => {
         }
     };
 
-    const handleAddProduct = () => {
-        if (!productName || !productDescription || !productCondition || !productImage) {
-            alert('Please fill out all fields');
-            return;
-        }
+    const handleAddProduct = async () => {
+        if (productName && productDescription && productImage) {
+            const userId = auth.currentUser?.uid; // Get current user's ID
+            if (!userId) {
+                alert('Please log in to add a product');
+                return;
+            }
 
-        // Proceed with adding the product
-        const newProduct = {
-            id: Math.random().toString(),
-            name: productName,
-            description: productDescription,
-            condition: productCondition,
-            image: productImage,
-            userId: auth.currentUser.uid, // Include userId for reference
-        };
-        dispatch(addProduct(newProduct));
-        navigation.goBack();
+            const newProduct = {
+                name: productName,
+                description: productDescription,
+                condition: productCondition,
+                image: productImage,
+                userId,  // Associate the product with the current user
+            };
+
+            const success = await createProduct(newProduct);
+            if (success) {
+                navigation.goBack();
+            } else {
+                alert('Failed to add product');
+            }
+        } else {
+            alert('Please fill out all fields');
+        }
     };
 
     return (

@@ -1,10 +1,12 @@
-// firebaseService.js
 import { db } from './firebase';
 
 // Create or Update User Information
 export const saveUser = async (userId, userData) => {
     try {
-        await db.collection('users').doc(userId).set(userData, { merge: true });
+        await db.collection('users').doc(userId).set({
+            ...userData,
+            createdAt: userData.createdAt || new Date().toISOString(), // Ensure createdAt is a serializable format
+        }, { merge: true });
         return true;
     } catch (error) {
         console.error('Error saving user data: ', error);
@@ -24,9 +26,10 @@ export const getUser = async (userId) => {
 };
 
 // Create Product
-export const createProduct = async (productId, productData) => {
+export const createProduct = async (productData) => {
     try {
-        await db.collection('products').doc(productId).set(productData);
+        const userId = productData.userId;  // Make sure the userId is passed to this function
+        await db.collection('products').add({ ...productData, userId });
         return true;
     } catch (error) {
         console.error('Error creating product: ', error);
@@ -48,7 +51,10 @@ export const getProducts = async () => {
 // Update Product
 export const updateProduct = async (productId, productData) => {
     try {
-        await db.collection('products').doc(productId).update(productData);
+        await db.collection('products').doc(productId).update({
+            ...productData,
+            updatedAt: new Date().toISOString(), // Include updated timestamp for tracking
+        });
         return true;
     } catch (error) {
         console.error('Error updating product: ', error);

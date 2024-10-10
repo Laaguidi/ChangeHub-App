@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { auth, db } from '../firebase'; // Import Firebase correctly
-import firebase from 'firebase/compat/app'; // Import firebase for firestore field value
 
 const Register = ({ navigation }) => {
     const [fullName, setFullName] = useState('');
@@ -24,12 +23,13 @@ const Register = ({ navigation }) => {
             const user = userCredential.user;
 
             // Save user information to Firestore
+            const createdAt = new Date().toISOString(); // Use serializable format
             await db.collection('users').doc(user.uid).set({
                 fullName: fullName,
                 email: user.email,
                 city: city,
                 profilePicture: 'https://via.placeholder.com/150', // Placeholder image
-                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                createdAt: createdAt,
             });
 
             Alert.alert('Registration successful!');

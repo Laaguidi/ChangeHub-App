@@ -1,23 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import {
-    View, Text, Image, Button, FlatList, ScrollView, StyleSheet, Dimensions,
-    TouchableOpacity, Modal, TextInput, Alert
+    View, Text, Image, Button, FlatList, ScrollView, StyleSheet, TouchableOpacity, Alert
 } from 'react-native';
-import { db, auth } from '../firebase'; // Import Firebase Firestore and Authentication
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchProducts } from '../redux/slices/productSlice'; // Redux fetch action
-
-const { width } = Dimensions.get('window');
+import { db, auth } from '../firebase';
 
 const User = ({ navigation }) => {
-    const dispatch = useDispatch();
-    const products = useSelector((state) => state.products.products);
-    const user = useSelector((state) => state.user.user);
-
-    const [modalVisible, setModalVisible] = useState(false);
-    const [newName, setNewName] = useState('');
-    const [newLocation, setNewLocation] = useState('');
-    const [newProfilePicture, setNewProfilePicture] = useState('');
+    const [user, setUser] = useState(null);
+    const [products, setProducts] = useState([]);
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -26,13 +15,7 @@ const User = ({ navigation }) => {
                 if (currentUser) {
                     const userDoc = await db.collection('users').doc(currentUser.uid).get();
                     if (userDoc.exists) {
-                        const userData = userDoc.data();
-                        if (userData.createdAt) {
-                            userData.createdAt = userData.createdAt.toDate().toISOString();
-                        }
-                        setNewName(userData.name);
-                        setNewLocation(userData.location);
-                        setNewProfilePicture(userData.profilePicture);
+                        setUser(userDoc.data());
                     }
                 }
             } catch (error) {
@@ -40,50 +23,42 @@ const User = ({ navigation }) => {
             }
         };
 
-        fetchUserData();
-    }, []);
-
-    useEffect(() => {
-        const currentUser = auth.currentUser;
-        if (currentUser) {
-            dispatch(fetchProducts());
-        }
-    }, [dispatch]);
-
-    const handleUpdateUserInfo = async () => {
-        try {
+        const fetchProducts = () => {
             const currentUser = auth.currentUser;
             if (currentUser) {
-                const updatedUser = {
-                    name: newName,
-                    location: newLocation,
-                    profilePicture: newProfilePicture,
-                };
-
-                await db.collection('users').doc(currentUser.uid).set(updatedUser, { merge: true });
-                Alert.alert("Success", "Your information has been updated.");
-                setModalVisible(false);
+                return db.collection('products')
+                    .where('userId', '==', currentUser.uid)
+                    .onSnapshot((snapshot) => {
+                        const productsData = snapshot.docs.map((doc) => ({
+                            id: doc.id,
+                            ...doc.data(),
+                        }));
+                        setProducts(productsData);
+                    }, (error) => {
+                        console.error('Failed to fetch products from Firestore:', error);
+                    });
             }
-        } catch (error) {
-            console.error("Error updating user info:", error);
-            Alert.alert("Error", "Failed to update your information. Please try again.");
-        }
-    };
+        };
 
-    const handleProductPress = (product) => {
-        navigation.navigate('Product', { product });
-    };
+        fetchUserData();
+        const unsubscribeProducts = fetchProducts();
+
+        return () => {
+            if (unsubscribeProducts) {
+                unsubscribeProducts();
+            }
+        };
+    }, []);
 
     return (
         <ScrollView contentContainerStyle={styles.scrollContainer}>
             {user && (
                 <View style={styles.userInfoSection}>
-                    <Image source={{ uri: newProfilePicture }} style={styles.profilePicture} />
-                    <Text style={styles.userName}>{newName}</Text>
-                    <Text style={styles.userLocation}>{newLocation}</Text>
+                    <Image source={{ uri: user.profilePicture }} style={styles.profilePicture} />
+                    <Text style={styles.userName}>{user.fullName}</Text>
+                    <Text style={styles.userLocation}>{user.city}</Text>
 
-                    {/* Button to open modal for updating user info */}
-                    <Button title="Update Info" onPress={() => setModalVisible(true)} />
+                    <Button title="Update Info" onPress={() => navigation.navigate('UpdateUser')} />
                 </View>
             )}
 
@@ -93,12 +68,11 @@ const User = ({ navigation }) => {
                     <Button title="Add New Product" onPress={() => navigation.navigate('AddProduct')} />
                 </View>
 
-                {/* List of Products */}
                 <FlatList
-                    data={products.filter((item) => item.name && item.condition && item.image)} // Filtering out incomplete products
+                    data={products}
                     keyExtractor={(item) => item.id}
                     renderItem={({ item }) => (
-                        <TouchableOpacity onPress={() => handleProductPress(item)}>
+                        <TouchableOpacity onPress={() => navigation.navigate('Product', { product: item })}>
                             <View style={styles.productCard}>
                                 <Image source={{ uri: item.image }} style={styles.productImage} />
                                 <View style={styles.productDetails}>
@@ -111,42 +85,6 @@ const User = ({ navigation }) => {
                     )}
                 />
             </View>
-
-            {/* Modal for updating user info */}
-            <Modal
-                animationType="slide"
-                transparent={true}
-                visible={modalVisible}
-                onRequestClose={() => setModalVisible(false)}
-            >
-                <View style={styles.modalContainer}>
-                    <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>Update Your Information</Text>
-
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Name"
-                            value={newName}
-                            onChangeText={setNewName}
-                        />
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Location"
-                            value={newLocation}
-                            onChangeText={setNewLocation}
-                        />
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Profile Picture URL"
-                            value={newProfilePicture}
-                            onChangeText={setNewProfilePicture}
-                        />
-
-                        <Button title="Save" onPress={handleUpdateUserInfo} />
-                        <Button title="Cancel" onPress={() => setModalVisible(false)} color="red" />
-                    </View>
-                </View>
-            </Modal>
         </ScrollView>
     );
 };
