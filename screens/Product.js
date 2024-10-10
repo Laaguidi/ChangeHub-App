@@ -3,59 +3,59 @@ import {
     View, Text, Image, StyleSheet, FlatList, Button, Alert, Modal,
     TextInput, TouchableOpacity, ScrollView
 } from 'react-native';
+import { deleteProduct, updateProduct } from '../firebaseService'; // Import the service functions
+import { useDispatch } from 'react-redux';
+import { deleteProductAction, updateProductAction } from '../redux/slices/productSlice';
 
 const Product = ({ route, navigation }) => {
     const { product } = route.params;
-
-    // Placeholder data for products the owner wishes to exchange with
-    const exchangeOptions = [
-        { id: '1', title: 'Samsung Galaxy Watch', image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?q=80&w=3000&auto=format&fit=crop' },
-        { id: '2', title: 'Nikon DSLR Camera', image: 'https://images.unsplash.com/photo-1519183071298-a2962c3dd95e?q=80&w=3000&auto=format&fit=crop' },
-        { id: '3', title: 'Mountain Bike', image: 'https://images.unsplash.com/photo-1565294124524-200bb738cdb0?q=80&w=3000&auto=format&fit=crop' },
-    ];
-
-    // State for modal visibility and updated product info
     const [modalVisible, setModalVisible] = useState(false);
     const [updatedName, setUpdatedName] = useState(product.name);
     const [updatedDescription, setUpdatedDescription] = useState(product.description);
     const [updatedCondition, setUpdatedCondition] = useState(product.condition);
     const [updatedImage, setUpdatedImage] = useState(product.image);
+    const dispatch = useDispatch();
 
-    // Handler for delete button
-    const handleDelete = () => {
+    // Handler for deleting the product
+    const handleDelete = async () => {
         Alert.alert(
             'Delete Product',
             'Are you sure you want to delete this product?',
             [
                 { text: 'Cancel', style: 'cancel' },
-                { text: 'OK', onPress: () => {
-                        navigation.navigate('User', { deletedProductId: product.id });
-                    }},
+                {
+                    text: 'OK', onPress: async () => {
+                        const success = await deleteProduct(product.id);
+                        if (success) {
+                            dispatch(deleteProductAction(product.id));
+                            navigation.goBack(); // Navigate back to User screen after deleting
+                        } else {
+                            Alert.alert('Error', 'Failed to delete the product. Please try again.');
+                        }
+                    }
+                },
             ]
         );
     };
 
-    // Handler for registering the updated product details
-    const handleUpdateProduct = () => {
+    // Handler for updating the product details
+    const handleUpdateProduct = async () => {
         const updatedProduct = {
-            ...product,
             name: updatedName,
             description: updatedDescription,
             condition: updatedCondition,
-            image: updatedImage
+            image: updatedImage,
         };
 
-        // Navigate back to the User screen with updated product details
-        navigation.navigate('User', { updatedProduct });
-        setModalVisible(false);
+        const success = await updateProduct(product.id, updatedProduct);
+        if (success) {
+            dispatch(updateProductAction({ productId: product.id, productData: updatedProduct }));
+            setModalVisible(false);
+            navigation.goBack(); // Navigate back to User screen to reflect changes
+        } else {
+            Alert.alert('Error', 'Failed to update the product. Please try again.');
+        }
     };
-
-    const renderExchangeOption = ({ item }) => (
-        <View style={styles.exchangeCard}>
-            <Image source={{ uri: item.image }} style={styles.exchangeImage} />
-            <Text style={styles.exchangeTitle}>{item.title}</Text>
-        </View>
-    );
 
     return (
         <ScrollView contentContainerStyle={styles.container}>
@@ -73,23 +73,6 @@ const Product = ({ route, navigation }) => {
             <View style={styles.actionButtons}>
                 <Button title="Update" onPress={() => setModalVisible(true)} color="#007bff" />
                 <Button title="Delete" onPress={handleDelete} color="#dc3545" />
-            </View>
-
-            {/* Exchange Options */}
-            <View style={styles.exchangeSection}>
-                <Text style={styles.exchangeHeader}>Products Owner Wishes to Exchange With</Text>
-                <FlatList
-                    data={exchangeOptions}
-                    keyExtractor={(item) => item.id}
-                    renderItem={renderExchangeOption}
-                    horizontal={true}
-                    showsHorizontalScrollIndicator={false}
-                />
-            </View>
-
-            {/* Back Button */}
-            <View style={styles.backButton}>
-                <Button title="Back to Profile" onPress={() => navigation.goBack()} />
             </View>
 
             {/* Modal for updating product info */}
@@ -170,37 +153,6 @@ const styles = StyleSheet.create({
     productCondition: {
         fontSize: 16,
         color: 'gray',
-    },
-    exchangeSection: {
-        marginBottom: 30,
-    },
-    exchangeHeader: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        marginBottom: 10,
-    },
-    exchangeCard: {
-        backgroundColor: '#fff',
-        borderRadius: 10,
-        padding: 15,
-        alignItems: 'center',
-        marginRight: 15,
-        elevation: 3,
-        width: 150,
-    },
-    exchangeImage: {
-        width: 120,
-        height: 120,
-        borderRadius: 10,
-        marginBottom: 10,
-    },
-    exchangeTitle: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        textAlign: 'center',
-    },
-    backButton: {
-        marginTop: 10,
     },
     actionButtons: {
         flexDirection: 'row',
