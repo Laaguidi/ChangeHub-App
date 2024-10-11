@@ -3,9 +3,9 @@ import {
     View, Text, Image, StyleSheet, FlatList, Button, Alert, Modal,
     TextInput, TouchableOpacity, ScrollView
 } from 'react-native';
-import { deleteProduct, updateProduct } from '../firebaseService'; // Import the service functions
 import { useDispatch } from 'react-redux';
 import { deleteProductAction, updateProductAction } from '../redux/slices/productSlice';
+import { deleteProduct, updateProduct } from '../firebaseService'; // Import firebase service functions
 
 const Product = ({ route, navigation }) => {
     const { product } = route.params;
@@ -38,7 +38,7 @@ const Product = ({ route, navigation }) => {
         );
     };
 
-    // Handler for updating the product details
+    // Handler for updating product details
     const handleUpdateProduct = async () => {
         const updatedProduct = {
             name: updatedName,
@@ -57,22 +57,36 @@ const Product = ({ route, navigation }) => {
         }
     };
 
+    // Handler for adding product to wishlist
+    const handleAddToWishlist = () => {
+        Alert.alert('Wishlist', `Product "${product.name}" has been added to your wishlist!`);
+        // Add functionality to actually add the product to the user's wishlist if required
+    };
+
     return (
         <ScrollView contentContainerStyle={styles.container}>
-            {/* Product Image */}
-            <Image source={{ uri: product.image }} style={styles.productImage} />
+            <View style={styles.productInfoContainer}>
+                {/* Product Image */}
+                <Image source={{ uri: product.image }} style={styles.productImage} />
 
-            {/* Product Information */}
-            <View style={styles.infoSection}>
-                <Text style={styles.productName}>{product.name}</Text>
-                <Text style={styles.productDescription}>{product.description}</Text>
-                <Text style={styles.productCondition}>Condition: {product.condition}</Text>
+                {/* Product Information */}
+                <View style={styles.infoSection}>
+                    <Text style={styles.productName}>{product.name}</Text>
+                    <Text style={styles.productDescription}>{product.description}</Text>
+                    <Text style={styles.productCondition}>Condition: {product.condition}</Text>
+                </View>
             </View>
 
             {/* Delete and Update Buttons */}
             <View style={styles.actionButtons}>
                 <Button title="Update" onPress={() => setModalVisible(true)} color="#007bff" />
                 <Button title="Delete" onPress={handleDelete} color="#dc3545" />
+            </View>
+
+            {/* New Section for "Wish to Change With" */}
+            <View style={styles.wishSection}>
+                <Text style={styles.wishTitle}>Wish to Change With</Text>
+                <Button title="Add to Wishlist" onPress={handleAddToWishlist} color="#28a745" />
             </View>
 
             {/* Modal for updating product info */}
@@ -131,6 +145,13 @@ const styles = StyleSheet.create({
         padding: 20,
         backgroundColor: '#f5f5f5',
     },
+    productInfoContainer: {
+        backgroundColor: '#9c88ff',
+        borderRadius: 10,
+        marginBottom: 20,
+        padding: 20,
+        alignItems: 'center',
+    },
     productImage: {
         width: '100%',
         height: 250,
@@ -158,6 +179,19 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         marginBottom: 30,
+    },
+    // New Styles for Wish Section
+    wishSection: {
+        padding: 20,
+        borderRadius: 10,
+        backgroundColor: '#7ed6df', // Light green background color
+        marginBottom: 30,
+        alignItems: 'center',
+    },
+    wishTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        marginBottom: 10,
     },
     modalContainer: {
         flex: 1,

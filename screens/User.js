@@ -1,12 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import {
-    View, Text, Image, Button, FlatList, ScrollView, StyleSheet, TouchableOpacity, Alert
-} from 'react-native';
-import { db, auth } from '../firebase';
+import { View, Text, Image, Button, FlatList, ScrollView, StyleSheet, Modal, TextInput, Alert, TouchableOpacity } from 'react-native';
+import { db, auth } from '../firebase'; // Import Firebase Firestore and Authentication
+import { Icon } from 'react-native-elements'; // Import the Icon component for burger menu
 
 const User = ({ navigation }) => {
     const [user, setUser] = useState(null);
     const [products, setProducts] = useState([]);
+    const [wishlist, setWishlist] = useState([]); // New state for wishlist
+    const [modalVisible, setModalVisible] = useState(false);
+    const [menuVisible, setMenuVisible] = useState(false); // State to manage burger menu visibility
+    const [newName, setNewName] = useState('');
+    const [newLocation, setNewLocation] = useState('');
+    const [newProfilePicture, setNewProfilePicture] = useState('');
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -15,7 +20,11 @@ const User = ({ navigation }) => {
                 if (currentUser) {
                     const userDoc = await db.collection('users').doc(currentUser.uid).get();
                     if (userDoc.exists) {
-                        setUser(userDoc.data());
+                        const userData = userDoc.data();
+                        setUser(userData);
+                        setNewName(userData.fullName);
+                        setNewLocation(userData.city);
+                        setNewProfilePicture(userData.profilePicture);
                     }
                 }
             } catch (error) {
@@ -50,15 +59,53 @@ const User = ({ navigation }) => {
         };
     }, []);
 
+    // Function to handle user information update
+    const handleUpdateUserInfo = async () => {
+        try {
+            const currentUser = auth.currentUser;
+            if (currentUser) {
+                const updatedUser = {
+                    fullName: newName,
+                    city: newLocation,
+                    profilePicture: newProfilePicture,
+                };
+
+                // Update user info in Firestore
+                await db.collection('users').doc(currentUser.uid).set(updatedUser, { merge: true });
+
+                // Update state to reflect changes
+                setUser(updatedUser);
+                setModalVisible(false);
+                Alert.alert("Success", "Your information has been updated.");
+            }
+        } catch (error) {
+            console.error("Error updating user info:", error);
+            Alert.alert("Error", "Failed to update your information. Please try again.");
+        }
+    };
+
+    const handleProductPress = (product) => {
+        navigation.navigate('Product', { product });
+    };
+
     return (
         <ScrollView contentContainerStyle={styles.scrollContainer}>
+            <View style={styles.header}>
+                <Text style={styles.headerTitle}>User Profile</Text>
+                {/* Burger menu icon */}
+                <TouchableOpacity onPress={() => setMenuVisible(true)}>
+                    <Icon name="menu" size={30} color="black" />
+                </TouchableOpacity>
+            </View>
+
             {user && (
                 <View style={styles.userInfoSection}>
                     <Image source={{ uri: user.profilePicture }} style={styles.profilePicture} />
                     <Text style={styles.userName}>{user.fullName}</Text>
                     <Text style={styles.userLocation}>{user.city}</Text>
 
-                    <Button title="Update Info" onPress={() => navigation.navigate('UpdateUser')} />
+                    {/* Button to open modal for updating user info */}
+                    <Button title="Update Info" onPress={() => setModalVisible(true)} />
                 </View>
             )}
 
@@ -68,11 +115,12 @@ const User = ({ navigation }) => {
                     <Button title="Add New Product" onPress={() => navigation.navigate('AddProduct')} />
                 </View>
 
+                {/* List of Products */}
                 <FlatList
                     data={products}
                     keyExtractor={(item) => item.id}
                     renderItem={({ item }) => (
-                        <TouchableOpacity onPress={() => navigation.navigate('Product', { product: item })}>
+                        <TouchableOpacity onPress={() => handleProductPress(item)}>
                             <View style={styles.productCard}>
                                 <Image source={{ uri: item.image }} style={styles.productImage} />
                                 <View style={styles.productDetails}>
@@ -85,6 +133,73 @@ const User = ({ navigation }) => {
                     )}
                 />
             </View>
+
+            {/* Wishlist Section */}
+            <View style={styles.wishlistSection}>
+                <Text style={styles.wishlistTitle}>Wishlist</Text>
+                {wishlist.length === 0 ? (
+                    <Text style={styles.wishlistItem}>No items in wishlist yet.</Text>
+                ) : (
+                    wishlist.map((item) => (
+                        <Text key={item.id} style={styles.wishlistItem}>
+                            {item.title}
+                        </Text>
+                    ))
+                )}
+                <Button title="Add to Wishlist" onPress={() => navigation.navigate('AddWishlist')} />
+            </View>
+
+            {/* Burger Menu Modal */}
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={menuVisible}
+                onRequestClose={() => setMenuVisible(false)}
+            >
+                <View style={styles.menuContainer}>
+                    <View style={styles.menuContent}>
+                        <Text style={styles.menuItem} onPress={() => setMenuVisible(false)}>Profile</Text>
+                        <Text style={styles.menuItem} onPress={() => navigation.navigate('AddProduct')}>Add Product</Text>
+                        <Text style={styles.menuItem} onPress={() => navigation.navigate('Login')}>Logout</Text>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* Modal for updating user info */}
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={modalVisible}
+                onRequestClose={() => setModalVisible(false)}
+            >
+                <View style={styles.modalContainer}>
+                    <View style={styles.modalContent}>
+                        <Text style={styles.modalTitle}>Update Your Information</Text>
+
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Full Name"
+                            value={newName}
+                            onChangeText={setNewName}
+                        />
+                        <TextInput
+                            style={styles.input}
+                            placeholder="City"
+                            value={newLocation}
+                            onChangeText={setNewLocation}
+                        />
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Profile Picture URL"
+                            value={newProfilePicture}
+                            onChangeText={setNewProfilePicture}
+                        />
+
+                        <Button title="Save" onPress={handleUpdateUserInfo} />
+                        <Button title="Cancel" onPress={() => setModalVisible(false)} color="red" />
+                    </View>
+                </View>
+            </Modal>
         </ScrollView>
     );
 };
@@ -94,6 +209,33 @@ const styles = StyleSheet.create({
         flexGrow: 1,
         padding: 20,
         backgroundColor: '#f5f5f5',
+    },
+    header: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    headerTitle: {
+        fontSize: 24,
+        fontWeight: 'bold',
+    },
+    menuContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0,0,0,0.5)',
+    },
+    menuContent: {
+        width: 200,
+        padding: 20,
+        backgroundColor: '#fff',
+        borderRadius: 10,
+        alignItems: 'center',
+    },
+    menuItem: {
+        fontSize: 18,
+        marginVertical: 10,
     },
     userInfoSection: {
         alignItems: 'center',
@@ -156,6 +298,19 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: '#007bff',
         marginTop: 5,
+    },
+    wishlistSection: {
+        marginTop: 30,
+    },
+    wishlistTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        marginBottom: 10,
+    },
+    wishlistItem: {
+        fontSize: 16,
+        paddingVertical: 5,
+        color: '#333',
     },
     modalContainer: {
         flex: 1,
