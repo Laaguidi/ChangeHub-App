@@ -88,6 +88,51 @@ const User = ({ navigation }) => {
         navigation.navigate('Product', { product });
     };
 
+    // Function to handle account deletion
+    const deleteUserAccount = async () => {
+        try {
+            const currentUser = auth.currentUser;
+            if (currentUser) {
+                // Show confirmation alert
+                Alert.alert(
+                    "Delete Account",
+                    "Are you sure you want to delete your account? This action cannot be undone.",
+                    [
+                        { text: "Cancel", style: "cancel" },
+                        {
+                            text: "Delete",
+                            style: "destructive",
+                            onPress: async () => {
+                                try {
+                                    // Delete user's products
+                                    const productsSnapshot = await db.collection('products').where('userId', '==', currentUser.uid).get();
+                                    const deleteProductPromises = productsSnapshot.docs.map((doc) => doc.ref.delete());
+                                    await Promise.all(deleteProductPromises);
+
+                                    // Delete user's profile from Firestore
+                                    await db.collection('users').doc(currentUser.uid).delete();
+
+                                    // Delete user from Firebase Authentication
+                                    await currentUser.delete();
+
+                                    // Navigate back to the login screen
+                                    navigation.navigate('Login');
+                                    Alert.alert("Success", "Your account has been deleted.");
+                                } catch (error) {
+                                    console.error("Error deleting account: ", error);
+                                    Alert.alert("Error", "Failed to delete your account. Please try again.");
+                                }
+                            },
+                        },
+                    ]
+                );
+            }
+        } catch (error) {
+            console.error("Error deleting user account: ", error);
+            Alert.alert("Error", "Failed to delete your account. Please try again.");
+        }
+    };
+
     return (
         <ScrollView contentContainerStyle={styles.scrollContainer}>
             <View style={styles.header}>
@@ -160,6 +205,7 @@ const User = ({ navigation }) => {
                     <View style={styles.menuContent}>
                         <Text style={styles.menuItem} onPress={() => setMenuVisible(false)}>Profile</Text>
                         <Text style={styles.menuItem} onPress={() => navigation.navigate('AddProduct')}>Add Product</Text>
+                        <Text style={styles.menuItem} onPress={deleteUserAccount} style={{ color: 'red' }}>Delete Account</Text>
                         <Text style={styles.menuItem} onPress={() => navigation.navigate('Login')}>Logout</Text>
                     </View>
                 </View>
@@ -227,7 +273,7 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(0,0,0,0.5)',
     },
     menuContent: {
-        width: 200,
+        width: 250,
         padding: 20,
         backgroundColor: '#fff',
         borderRadius: 10,
@@ -236,6 +282,7 @@ const styles = StyleSheet.create({
     menuItem: {
         fontSize: 18,
         marginVertical: 10,
+        textAlign: 'center',
     },
     userInfoSection: {
         alignItems: 'center',
