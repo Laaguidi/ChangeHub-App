@@ -204,10 +204,7 @@ const User = ({ navigation }) => {
                             <TouchableOpacity onPress={() => handleProductPress(item)}>
                                 <View style={styles.productCard}>
                                     {/* Check if images array and the first image exist */}
-                                    <Image
-                                        source={{ uri: item.images && item.images.length > 0 ? item.images[0] : 'https://via.placeholder.com/150' }}
-                                        style={styles.productImage}
-                                    />
+                                    <Image source={{ uri: item.image }} style={styles.productImage} />
                                     <View style={styles.productDetails}>
                                         <Text style={styles.productName}>{item.name}</Text>
                                         <Text style={styles.productDescription}>{item.description}</Text>

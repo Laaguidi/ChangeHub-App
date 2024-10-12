@@ -1,19 +1,32 @@
 import React, { useState } from 'react';
 import {
-    View, Text, Image, StyleSheet, FlatList, Button, Alert, Modal,
-    TextInput, TouchableOpacity, ScrollView
+    View, Text, Image, StyleSheet, Button, Alert, Modal,
+    TextInput, TouchableOpacity, ScrollView, ActivityIndicator
 } from 'react-native';
 import { useDispatch } from 'react-redux';
 import { deleteProductAction, updateProductAction } from '../redux/slices/productSlice';
 import { deleteProduct, updateProduct } from '../firebaseService'; // Import firebase service functions
+import * as ImagePicker from 'expo-image-picker';
+import { auth, storage } from '../firebase';  // Import Firebase auth and storage
 
-const Product = ({ route, navigation }) => {
+// Function to upload the image to Firebase Storage
+const uploadImageAsync = async (uri) => {
+    const response = await fetch(uri);
+    const blob = await response.blob();
+    const ref = storage.ref().child(`products/${Date.now()}_${auth.currentUser.uid}`);
+    await ref.put(blob);
+    const downloadURL = await ref.getDownloadURL();
+    return downloadURL;
+};
+
+const Product = ({ route }) => {
     const { product } = route.params;
     const [modalVisible, setModalVisible] = useState(false);
     const [updatedName, setUpdatedName] = useState(product.name);
     const [updatedDescription, setUpdatedDescription] = useState(product.description);
     const [updatedCondition, setUpdatedCondition] = useState(product.condition);
     const [updatedImage, setUpdatedImage] = useState(product.image);
+    const [isLoading, setIsLoading] = useState(false);  // Loading state for image upload
     const dispatch = useDispatch();
 
     // Handler for deleting the product
@@ -28,7 +41,6 @@ const Product = ({ route, navigation }) => {
                         const success = await deleteProduct(product.id);
                         if (success) {
                             dispatch(deleteProductAction(product.id));
-                            navigation.goBack(); // Navigate back to User screen after deleting
                         } else {
                             Alert.alert('Error', 'Failed to delete the product. Please try again.');
                         }
@@ -40,20 +52,48 @@ const Product = ({ route, navigation }) => {
 
     // Handler for updating product details
     const handleUpdateProduct = async () => {
-        const updatedProduct = {
-            name: updatedName,
-            description: updatedDescription,
-            condition: updatedCondition,
-            image: updatedImage,
-        };
+        try {
+            setIsLoading(true);  // Start loading
+            let imageUrl = updatedImage;
 
-        const success = await updateProduct(product.id, updatedProduct);
-        if (success) {
-            dispatch(updateProductAction({ productId: product.id, productData: updatedProduct }));
-            setModalVisible(false);
-            navigation.goBack(); // Navigate back to User screen to reflect changes
-        } else {
+            // If a new image has been selected, upload it to Firebase Storage
+            if (updatedImage.startsWith('file://')) {
+                imageUrl = await uploadImageAsync(updatedImage);
+            }
+
+            const updatedProduct = {
+                name: updatedName,
+                description: updatedDescription,
+                condition: updatedCondition,
+                image: imageUrl,
+            };
+
+            const success = await updateProduct(product.id, updatedProduct);
+            if (success) {
+                dispatch(updateProductAction({ productId: product.id, productData: updatedProduct }));
+                setModalVisible(false);  // Close the modal, but stay on the product page
+            } else {
+                Alert.alert('Error', 'Failed to update the product. Please try again.');
+            }
+        } catch (error) {
+            console.error('Error updating product:', error);
             Alert.alert('Error', 'Failed to update the product. Please try again.');
+        } finally {
+            setIsLoading(false);  // Stop loading
+        }
+    };
+
+    // Handler for picking a new image
+    const pickImage = async () => {
+        let result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [4, 3],
+            quality: 1,
+        });
+
+        if (!result.canceled) {
+            setUpdatedImage(result.assets[0].uri); // Set the selected image URI for uploading
         }
     };
 
@@ -67,7 +107,7 @@ const Product = ({ route, navigation }) => {
         <ScrollView contentContainerStyle={styles.container}>
             <View style={styles.productInfoContainer}>
                 {/* Product Image */}
-                <Image source={{ uri: product.image }} style={styles.productImage} />
+                <Image source={{ uri: updatedImage || product.image }} style={styles.productImage} />
 
                 {/* Product Information */}
                 <View style={styles.infoSection}>
@@ -120,12 +160,21 @@ const Product = ({ route, navigation }) => {
                             value={updatedCondition}
                             onChangeText={setUpdatedCondition}
                         />
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Product Image URL"
-                            value={updatedImage}
-                            onChangeText={setUpdatedImage}
-                        />
+
+                        {/* Image picker for selecting a new image */}
+                        <TouchableOpacity onPress={pickImage} style={styles.imagePicker}>
+                            <Text style={styles.imagePickerText}>Pick a new image</Text>
+                        </TouchableOpacity>
+
+                        {updatedImage && (
+                            <Image
+                                source={{ uri: updatedImage }}
+                                style={styles.previewImage}
+                            />
+                        )}
+
+                        {/* Loading Spinner */}
+                        {isLoading && <ActivityIndicator size="large" color="#007bff" />}
 
                         {/* Buttons to save or cancel updates */}
                         <View style={styles.modalButtons}>
@@ -223,6 +272,21 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-around',
         width: '100%',
+    },
+    imagePicker: {
+        padding: 10,
+        backgroundColor: '#007bff',
+        borderRadius: 5,
+        marginBottom: 10,
+    },
+    imagePickerText: {
+        color: '#fff',
+        textAlign: 'center',
+    },
+    previewImage: {
+        width: 200,
+        height: 200,
+        marginBottom: 10,
     },
 });
 
