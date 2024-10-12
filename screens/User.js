@@ -4,8 +4,9 @@ import { db, auth, storage } from '../firebase'; // Import Firebase Firestore, A
 import { Icon } from 'react-native-elements'; // Import the Icon component for burger menu
 import * as ImagePicker from 'expo-image-picker'; // Import Image Picker for selecting images
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'; // Import Firebase storage functions
+import { useNavigation } from '@react-navigation/native'; // Import for navigation
 
-const User = ({ navigation }) => {
+const User = () => {
     const [user, setUser] = useState(null);
     const [products, setProducts] = useState([]);
     const [wishlist, setWishlist] = useState([]);
@@ -15,6 +16,7 @@ const User = ({ navigation }) => {
     const [newLocation, setNewLocation] = useState('');
     const [newProfilePicture, setNewProfilePicture] = useState('');
     const [selectedImage, setSelectedImage] = useState(null);
+    const navigation = useNavigation(); // For navigation
 
     // Fetch user data and user-specific products
     useEffect(() => {
@@ -244,6 +246,13 @@ const User = ({ navigation }) => {
                 <View style={styles.menuContainer}>
                     <View style={styles.menuContent}>
                         <Text style={styles.menuItem} onPress={() => setMenuVisible(false)}>Profile</Text>
+
+                        {/* New navigation to home */}
+                        <Text style={styles.menuItem} onPress={() => {
+                            setMenuVisible(false);
+                            navigation.navigate('Home');
+                        }}>Home</Text>
+
                         <Text style={styles.menuItem} onPress={() => navigation.navigate('AddProduct')}>Add Product</Text>
                         <Text style={styles.menuItem} onPress={deleteUserAccount} style={{ color: 'red' }}>Delete Account</Text>
                         <Text style={styles.menuItem} onPress={() => navigation.navigate('Login')}>Logout</Text>

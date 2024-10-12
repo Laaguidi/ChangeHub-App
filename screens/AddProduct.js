@@ -38,8 +38,10 @@ const AddProduct = () => {
                 description: productDescription,
                 condition: productCondition,
                 image: productImage,
+                category: selectedCategory,  // This could be "Femmes", "Hommes", etc.
                 userId,  // Associate the product with the current user
             };
+
 
             const success = await createProduct(newProduct);
             if (success) {
