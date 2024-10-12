@@ -1,18 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, Image, Button, FlatList, ScrollView, StyleSheet, Modal, TextInput, Alert, TouchableOpacity } from 'react-native';
-import { db, auth } from '../firebase'; // Import Firebase Firestore and Authentication
+import { db, auth, storage } from '../firebase'; // Import Firebase Firestore, Authentication, and Storage
 import { Icon } from 'react-native-elements'; // Import the Icon component for burger menu
+import * as ImagePicker from 'expo-image-picker'; // Import Image Picker for selecting images
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'; // Import Firebase storage functions
 
 const User = ({ navigation }) => {
     const [user, setUser] = useState(null);
     const [products, setProducts] = useState([]);
-    const [wishlist, setWishlist] = useState([]); // New state for wishlist
+    const [wishlist, setWishlist] = useState([]);
     const [modalVisible, setModalVisible] = useState(false);
     const [menuVisible, setMenuVisible] = useState(false); // State to manage burger menu visibility
     const [newName, setNewName] = useState('');
     const [newLocation, setNewLocation] = useState('');
     const [newProfilePicture, setNewProfilePicture] = useState('');
+    const [selectedImage, setSelectedImage] = useState(null);
 
+    // Fetch user data and user-specific products
     useEffect(() => {
         const fetchUserData = async () => {
             try {
@@ -59,15 +63,42 @@ const User = ({ navigation }) => {
         };
     }, []);
 
-    // Function to handle user information update
+    // Function to handle image picking from the device
+    const pickImage = async () => {
+        let result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [4, 3],
+            quality: 1,
+        });
+
+        if (!result.canceled) {
+            setSelectedImage(result.assets[0].uri); // Set selected image URI
+        }
+    };
+
+    // Function to handle user information update with image upload
     const handleUpdateUserInfo = async () => {
         try {
             const currentUser = auth.currentUser;
             if (currentUser) {
+                let profilePictureUrl = newProfilePicture;
+
+                // If an image is selected, upload it to Firebase Storage
+                if (selectedImage) {
+                    const imageRef = ref(storage, `profilePictures/${currentUser.uid}.jpg`);
+                    const img = await fetch(selectedImage);
+                    const bytes = await img.blob();
+
+                    // Upload the image to Firebase Storage
+                    await uploadBytes(imageRef, bytes);
+                    profilePictureUrl = await getDownloadURL(imageRef);
+                }
+
                 const updatedUser = {
                     fullName: newName,
                     city: newLocation,
-                    profilePicture: newProfilePicture,
+                    profilePicture: profilePictureUrl,
                 };
 
                 // Update user info in Firestore
@@ -145,7 +176,11 @@ const User = ({ navigation }) => {
 
             {user && (
                 <View style={styles.userInfoSection}>
-                    <Image source={{ uri: user.profilePicture }} style={styles.profilePicture} />
+                    {user.profilePicture ? (
+                        <Image source={{ uri: user.profilePicture }} style={styles.profilePicture} />
+                    ) : (
+                        <Text>No Profile Picture</Text>
+                    )}
                     <Text style={styles.userName}>{user.fullName}</Text>
                     <Text style={styles.userLocation}>{user.city}</Text>
 
@@ -161,22 +196,30 @@ const User = ({ navigation }) => {
                 </View>
 
                 {/* List of Products */}
-                <FlatList
-                    data={products}
-                    keyExtractor={(item) => item.id}
-                    renderItem={({ item }) => (
-                        <TouchableOpacity onPress={() => handleProductPress(item)}>
-                            <View style={styles.productCard}>
-                                <Image source={{ uri: item.image }} style={styles.productImage} />
-                                <View style={styles.productDetails}>
-                                    <Text style={styles.productName}>{item.name}</Text>
-                                    <Text style={styles.productDescription}>{item.description}</Text>
-                                    <Text style={styles.productCondition}>Condition: {item.condition}</Text>
+                {products.length > 0 ? (
+                    <FlatList
+                        data={products}
+                        keyExtractor={(item) => item.id}
+                        renderItem={({ item }) => (
+                            <TouchableOpacity onPress={() => handleProductPress(item)}>
+                                <View style={styles.productCard}>
+                                    {/* Check if images array and the first image exist */}
+                                    <Image
+                                        source={{ uri: item.images && item.images.length > 0 ? item.images[0] : 'https://via.placeholder.com/150' }}
+                                        style={styles.productImage}
+                                    />
+                                    <View style={styles.productDetails}>
+                                        <Text style={styles.productName}>{item.name}</Text>
+                                        <Text style={styles.productDescription}>{item.description}</Text>
+                                        <Text style={styles.productCondition}>Condition: {item.condition}</Text>
+                                    </View>
                                 </View>
-                            </View>
-                        </TouchableOpacity>
-                    )}
-                />
+                            </TouchableOpacity>
+                        )}
+                    />
+                ) : (
+                    <Text>No products found</Text>
+                )}
             </View>
 
             {/* Wishlist Section */}
@@ -234,12 +277,10 @@ const User = ({ navigation }) => {
                             value={newLocation}
                             onChangeText={setNewLocation}
                         />
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Profile Picture URL"
-                            value={newProfilePicture}
-                            onChangeText={setNewProfilePicture}
-                        />
+                        <TouchableOpacity onPress={pickImage}>
+                            <Text style={styles.pickImageText}>Pick Profile Picture</Text>
+                        </TouchableOpacity>
+                        {selectedImage && <Image source={{ uri: selectedImage }} style={styles.previewImage} />}
 
                         <Button title="Save" onPress={handleUpdateUserInfo} />
                         <Button title="Cancel" onPress={() => setModalVisible(false)} color="red" />
@@ -384,6 +425,17 @@ const styles = StyleSheet.create({
         padding: 10,
         borderRadius: 5,
         marginBottom: 15,
+    },
+    pickImageText: {
+        fontSize: 16,
+        color: 'blue',
+        textAlign: 'center',
+        marginBottom: 10,
+    },
+    previewImage: {
+        width: 100,
+        height: 100,
+        marginBottom: 20,
     },
 });
 
